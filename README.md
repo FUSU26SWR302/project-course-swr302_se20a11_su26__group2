@@ -14,7 +14,6 @@
 | Group | 2 |
 | Project Name | DevTrack AI |
 | Topic | AI-Integrated Project Workspace for IT Student Teams |
-| Repository | https://github.com/FUSU26SWR302/project-course-swr302_se20a11_su26__group2 |
 
 ## Team Members
 
@@ -190,7 +189,6 @@ Frontend Web App
 ```text
 backend/              Spring Boot REST API, business logic, authentication, RTM service
 frontend/             Web application for role-based project workspace UI
-database/             Flyway migrations, seed data, database scripts
 docs/                 SRS, report materials, RBL notes, AI audit/reflection documents
 .github/              GitHub configuration and workflow-related files
 README.md             Project overview and setup documentation
