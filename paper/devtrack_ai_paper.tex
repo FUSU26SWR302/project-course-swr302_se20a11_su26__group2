@@ -1,0 +1,344 @@
+\documentclass[runningheads]{llncs}
+
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{url}
+\usepackage{booktabs}
+
+\begin{document}
+
+\title{DevTrack AI: An Evidence-Based Traceability and Reporting System for Student Software Projects}
+
+\titlerunning{DevTrack AI}
+
+\author{Pham Duy Hung\inst{1} \and
+Nguyen Thanh Dat\inst{1} \and
+Nguyen Le Trung Tin\inst{1} \and
+Tran Cong Tu\inst{1} \and
+Nguyen Minh Hieu\inst{1}}
+
+\authorrunning{N. M. Hieu et al.}
+
+\institute{FPT University, Da Nang, Vietnam}
+
+\maketitle
+
+\begin{abstract}
+Student software projects often combine requirement analysis, task implementation,
+testing, source-code collaboration, and weekly reporting under strict time limits.
+However, these activities are frequently managed through separated tools, making it
+difficult to verify whether a requirement has been implemented, tested, supported by
+evidence, and reflected in the final report. This paper presents DevTrack AI, a
+project management support system designed for academic software teams. The system
+organizes project artifacts through an end-to-end traceability flow from requirements
+to use cases, tasks, test cases, defects, evidence, requirement traceability matrix
+(RTM), and reports. DevTrack AI also introduces AI-assisted functions for artifact
+suggestion and report drafting, while keeping official decisions under human review.
+The proposed method combines rule-based traceability status calculation,
+evidence-based task verification, GitHub metadata integration, and optional AI
+summarization. The objective is to improve transparency, reduce missing artifacts,
+and support fairer progress review in student project environments.
+
+\keywords{Requirement traceability \and Agile project management \and Evidence-based verification \and Mining software repositories \and AI-assisted reporting}
+\end{abstract}
+
+% TODO: Add Jira link here if required by the instructor.
+% Jira link: <PLACEHOLDER_FOR_JIRA_LINK>
+
+\section{Introduction}
+
+Software engineering courses require student teams to deliver a working product
+together with requirements, tests, reports, and evidence of contribution. In
+practice, these artifacts are often managed in separated tools. Requirements may be
+written in documents, tasks may be tracked in a Kanban board, screenshots may be
+stored in chat messages, test cases may be updated late, and code activity may stay
+only in GitHub. This makes progress visible at the task level, but not always
+verifiable at the requirement level. A leader or mentor may still be unable to
+answer whether a requirement has been implemented, tested, supported by accepted
+evidence, and included in a report.
+
+Requirement traceability addresses this problem by connecting requirements with
+downstream artifacts such as tasks, tests, source code, and change records
+\cite{nlpTraceability,crossLevelTraceability}. However, maintaining traceability is
+difficult in academic projects because teams work quickly, use lightweight tools,
+and often prepare documentation near the end of a semester. At the same time, AI
+tools can help draft tasks, tests, and reports, but AI-generated text is not reliable
+unless it is grounded in structured project data. A fluent weekly report is not
+enough if it cannot be traced back to requirements, evidence, and code activity.
+
+DevTrack AI is proposed as an evidence-based traceability and reporting system for
+student software teams. It is not designed as another task board. Instead, it
+organizes project work around the artifact flow:
+
+\begin{center}
+\texttt{Requirement -> Use Case -> Task -> Test Case -> Bug/Defect -> Evidence -> RTM -> Report}
+\end{center}
+
+The goal is to make project progress explainable, not only visible. A task should
+not be considered complete simply because its status is moved to \texttt{Done}; it
+should be linked to a requirement, checked by tests or review evidence, and visible
+in the Requirement Traceability Matrix (RTM). The RTM then becomes a live project
+health view rather than a static table written only for final submission.
+
+This paper contributes a lightweight system method for academic project tracking.
+First, DevTrack AI uses rule-based RTM status calculation so that requirement health
+is transparent. Second, it combines an Evidence Vault with a leader-controlled
+review gate to reduce unsupported task completion. Third, it uses GitHub integration
+and Code Insight to connect code evidence with project artifacts. Fourth, it uses AI
+only as a support layer for suggestions and report drafts, while official decisions
+remain under human review.
+
+\section{Related Work}
+
+\subsection{Agile Traceability and Requirement Traceability}
+
+Requirement traceability connects requirements with related artifacts across the
+software lifecycle. Prior work shows that natural language processing, information
+retrieval, and learning-based techniques can help recover or maintain trace links
+between textual artifacts \cite{nlpTraceability,crossLevelTraceability}. Other work
+uses bag-of-words, TF-IDF, word embeddings, BERT-based models, and retrieval-augmented
+generation to improve semantic matching and trace link recovery
+\cite{crossLevelTraceability,traceBert,ragTraceability}.
+
+These studies are useful for long-term automation, but they often focus on recovering
+links after artifacts already exist. DevTrack AI takes a more operational direction
+for student teams. It keeps traceability visible during project execution through a
+rule-based RTM and human-confirmed artifact links. AI-based trace suggestions can be
+added later, but official traceability evidence should remain explainable and
+reviewable in the academic context.
+
+\subsection{Requirement, Test, Defect, and Evidence Management}
+
+Traceability is useful only when connected artifacts are meaningful and current. A
+requirement should be related not only to implementation tasks, but also to acceptance
+criteria, test cases, defects, and proof of completion. Requirement-driven tracking
+therefore needs links between planning artifacts and verification artifacts so that
+project status can be explained from evidence \cite{nlpTraceability,crossLevelTraceability}.
+
+In student projects, this relationship is often weak. Teams may write test cases
+late, record defects informally, or upload screenshots without review. DevTrack AI
+addresses this gap through an Evidence Vault and a review-oriented task completion
+flow. Evidence can include screenshots, API links, test results, GitHub issues,
+commits, pull requests, and CI/check metadata. A task may request completion review,
+but the leader still approves or rejects it based on the available evidence. This
+keeps traceability useful for monitoring and collaboration, not only final
+documentation \cite{ragTraceability}.
+
+\subsection{Automated Reporting and Software Artifact Summarization}
+
+Automated reporting is related to research on release note generation, pull request
+description generation, and commit message generation. These studies commonly treat
+software development data as source material for summarization. For example,
+extractive summarization can select important commits or pull requests for release
+notes \cite{releaseNotes}. Pull request description generation studies show how
+commit messages and source-code context can be transformed into natural language
+descriptions \cite{prDescriptions}. Commit message generation research similarly explores
+how source-code changes can be summarized into readable descriptions
+\cite{commitMessages}.
+
+The lesson for DevTrack AI is that weekly reports should not be generated from an
+empty prompt. The system first collects structured facts from tasks, sprint status,
+RTM snapshots, defects, evidence review status, and GitHub activity. AI can then
+rewrite those facts into a readable draft. This keeps the report grounded in project
+data and allows the leader to review it before it is saved or submitted.
+
+\subsection{Mining Software Repositories and AI for Software Engineering}
+
+Mining Software Repositories (MSR) studies how data from version control systems,
+issue trackers, pull requests, and other development platforms can be used to
+understand software development activities \cite{teachingMsr}. This is relevant to
+DevTrack AI because code contribution is an important part of student project
+assessment, but commit count alone is not a fair indicator of contribution. DevTrack
+AI therefore combines linked commits, pull requests, CI/check results, task
+completion, accepted evidence, test activity, defect fixes, and review decisions.
+
+Large language models (LLMs) have also been studied for software engineering tasks
+such as code summarization, code understanding, issue analysis, and development
+support \cite{llmSurvey}. In project-based
+courses, LLM-based contribution summarization is also relevant because it can convert
+repository activity into a more understandable description of individual work
+\cite{llmContribution}. However, LLM output must be controlled because it can
+produce plausible but unverifiable explanations. In DevTrack AI, AI support is
+therefore used for explanation and drafting, not for automatic grading or task
+approval. This human-in-the-loop principle is important for academic transparency.
+
+\section{Method}
+
+\subsection{Research and Design Approach}
+
+This work follows a design-oriented approach. The target problem is identified from
+common academic software project difficulties: unclear requirements, disconnected
+tasks and tests, weak evidence, hard-to-review progress, and unclear individual
+contribution. DevTrack AI is designed as a system artifact that combines
+traceability management, evidence review, GitHub metadata integration, and
+AI-assisted reporting.
+
+The method does not claim that AI replaces project management decisions. Instead,
+DevTrack AI separates deterministic project logic from AI support. Deterministic
+logic is used for official status calculation, review gates, artifact relationships,
+and evidence scoring. AI is used only for suggestions, structured review summaries,
+and report drafts after project data has already been collected.
+
+\subsection{System Artifact Model}
+
+The core model follows the artifact chain introduced in the paper. A project contains
+requirements. Requirements may have use cases and acceptance criteria. Tasks are
+linked to requirements and assigned to members. Test cases verify requirements and
+may create defects when execution fails. Evidence is uploaded or linked to tasks,
+requirements, tests, defects, or code activity. The RTM aggregates these
+relationships into a requirement-level health view, and reports are drafted from RTM
+snapshots and project activity.
+
+\begin{table}
+\centering
+\caption{Main DevTrack AI artifacts and their roles}
+\begin{tabular}{ll}
+\toprule
+\textbf{Artifact} & \textbf{Role in the system} \\
+\midrule
+Requirement & Defines expected system behavior and acceptance criteria. \\
+Use Case & Describes actor interaction and requirement scenarios. \\
+Task & Represents implementation, testing, design, documentation, or review work. \\
+Test Case & Verifies whether a requirement behaves as expected. \\
+Bug/Defect & Records failed behavior found during test execution. \\
+Evidence & Provides proof of implementation, testing, review, or demo result. \\
+RTM & Summarizes traceability and requirement health. \\
+Report & Presents weekly progress, risks, blockers, and contribution context. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Rule-Based RTM Status Calculation}
+
+The RTM module is read-only over existing project data. It does not create or modify
+requirements, tasks, tests, bugs, or evidence. Instead, it aggregates linked
+artifacts and computes requirement health from task progress, test execution,
+bug/defect state, accepted evidence, and risk reasons.
+
+The status calculation is rule-based to keep the result explainable. A requirement is
+\texttt{AT\_RISK} when it has blocking problems such as blocked tasks, failed or
+blocked tests, open bugs, critical/high defects, or missing required evidence. It is
+\texttt{DONE} when the requirement itself is done, linked tasks are done, linked
+tests pass or are not blocking, and no blocking risk remains. It is
+\texttt{NOT\_STARTED} when there is no task or test progress and no blocking risk.
+Otherwise, it is \texttt{IN\_PROGRESS}. This makes the RTM a transparent review
+surface: mentors can see not only the status, but also why the status was assigned.
+
+\subsection{Evidence-Based Task Review}
+
+DevTrack AI uses a review gate before a task is finally accepted as done. A member
+requests review after completing work. The system builds an evidence summary from
+available project data, including requirement linkage, assignee information,
+checklist status, subtasks, blocked state, linked GitHub issue, uploaded evidence,
+and linked code evidence. The project leader then approves or rejects the task. This
+process reduces false completion, where a task is marked done without meaningful
+proof.
+
+The Code Insight module extends this review gate for code-related tasks. It uses the
+shared GitHub Integration Core to handle repository configuration, webhook
+verification, and event dispatching. Push, pull request, workflow, and check-run
+events can be stored as normalized GitHub evidence and linked to tasks through
+explicit task identifiers, GitHub issue references, or SHA chains. Code Insight then
+uses local task signals and linked GitHub evidence to produce an explainable score,
+show evidence details to the leader, fetch changed-file metadata when needed, store
+local structured AI review summaries, capture review snapshots, and expose dashboard
+metrics. The leader remains the final authority:
+
+\begin{center}
+\texttt{GitHub evidence + deterministic rules + optional AI review + leader decision = trusted task completion}
+\end{center}
+
+\subsection{GitHub Integration and Code Insight}
+
+GitHub integration is treated as shared infrastructure rather than a repository
+clone. DevTrack AI stores only the metadata needed for traceability, review,
+reporting, and audit. This includes repository configuration, webhook events,
+commits, pull requests, CI/check results, changed-file summaries, evidence links,
+review decisions, and Code Insight snapshots.
+
+This design supports evidence-based project review without duplicating GitHub. A
+task can be checked for linked commits, pull requests, failed CI, weak evidence, or
+missing code activity. Because the system keeps the evidence and the leader decision
+together, source-code activity becomes part of the project traceability model rather
+than a separate repository history.
+
+\subsection{AI-Assisted Reporting}
+
+The weekly report method uses structured project facts as input. The system collects
+task status, sprint scope, requirement status, RTM snapshot, test execution results,
+defects, evidence review status, and GitHub activity. These facts are then grouped
+into progress, completed work, technical changes, risks, blockers, and contribution
+context. AI may be used to rewrite this structured summary into a readable report
+draft.
+
+The leader reviews the report before it is stored or submitted. This step is
+important because AI-generated language may hide missing data if the input is
+incomplete. In DevTrack AI, the AI report is therefore a draft, not the official
+source of truth. The official source remains the structured project data, accepted
+evidence, RTM state, and review decisions.
+
+\subsection{Evaluation Direction}
+
+The planned evaluation focuses on traceability completeness and review usefulness.
+Student project scenarios can be used to check whether DevTrack AI identifies
+requirements without tasks, tasks without evidence, requirements without test cases,
+failed tests without defects, unlinked code evidence, and weak completion claims. For
+AI-assisted reporting, generated drafts should be compared against structured project
+facts to detect unsupported claims. Feedback from leaders, members, and mentors can
+also be collected to assess whether the RTM and evidence workflow make project
+review clearer.
+
+\section{References}
+
+\begin{thebibliography}{99}
+
+\bibitem{nlpTraceability}
+Guo, J.L.C., Steghöfer, J.P., Vogelsang, A., Cleland-Huang, J.: Natural Language 
+Processing for Requirements Traceability. arXiv preprint arXiv:2405.10845 (2024).
+
+\bibitem{ragTraceability}
+Hey, T., Fuchß, D., Keim, J., Koziolek, A.: Requirements Traceability Link 
+Recovery via Retrieval-Augmented Generation. In: International Working 
+Conference on Requirements Engineering: Foundation for Software Quality (REFSQ). 
+Lecture Notes in Computer Science. Springer, Cham (2025).
+
+\bibitem{crossLevelTraceability}
+Mohammad, B., Sonbol, R., Rebdawi, G.: Cross-level Requirement Traceability: 
+A Novel Approach Integrating Bag-of-Words and Word Embedding for Enhanced 
+Similarity Functionality. arXiv preprint arXiv:2406.14310 (2024).
+
+\bibitem{traceBert}
+Lin, J., Liu, Y., Zeng, Q., Jiang, M., Cleland-Huang, J.: Traceability 
+Transformed: Generating More Accurate Links with Pre-Trained BERT Models. 
+arXiv preprint arXiv:2102.04411 (2021).
+
+\bibitem{releaseNotes}
+Nath, S.S., Roy, B.: Towards Automatically Generating Release Notes using 
+Extractive Summarization Technique. arXiv preprint arXiv:2204.05345 (2022).
+
+\bibitem{prDescriptions}
+Liu, Z., Xia, X., Treude, C., Lo, D., Li, S.: Automatic Generation of Pull 
+Request Descriptions. arXiv preprint arXiv:1909.06987 (2019).
+
+\bibitem{commitMessages}
+Cortés-Coy, L.F., Linares-Vásquez, M., Aponte, J., Poshyvanyk, D.: On
+Automatically Generating Commit Messages via Summarization of Source Code Changes.
+In: Proceedings of the 14th IEEE International Working Conference on Source Code
+Analysis and Manipulation (SCAM), pp. 275--284 (2014).
+
+\bibitem{teachingMsr}
+Codabux, Z., Fard, F., Verdecchia, R., Palomba, F., Di Nucci, D., Recupito, G.: 
+Teaching Mining Software Repositories. arXiv preprint arXiv:2501.01903 (2025).
+
+\bibitem{llmSurvey}
+Zhang, Q., Fang, C., Xie, Y., Zhang, Y., Yang, Y., Sun, W., Yu, S., Chen, Z.: 
+A Survey on Large Language Models for Software Engineering. arXiv preprint 
+arXiv:2312.15223 (2024).
+
+\bibitem{llmContribution}
+Ferrao, R.C., de Miranda, F., Soler, D.P.: LLM Contribution Summarization 
+in Software Projects. arXiv preprint arXiv:2505.17710 (2025).
+
+\end{thebibliography}
+
+\end{document}
