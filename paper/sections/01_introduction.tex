@@ -1,0 +1,44 @@
+\section{Introduction}
+\label{sec:intro}
+
+
+Software engineering courses require student teams to deliver a working product
+together with requirements, tests, reports, and evidence of contribution. In
+practice, these artifacts are often managed in separated tools. Requirements may be
+written in documents, tasks may be tracked in a Kanban board, screenshots may be
+stored in chat messages, test cases may be updated late, and code activity may stay
+only in GitHub. This makes progress visible at the task level, but not always
+verifiable at the requirement level. A leader or mentor may still be unable to
+answer whether a requirement has been implemented, tested, supported by accepted
+evidence, and included in a report.
+
+Requirement traceability addresses this problem by connecting requirements with
+downstream artifacts such as tasks, tests, source code, and change records
+\cite{nlpTraceability,crossLevelTraceability}. However, maintaining traceability is
+difficult in academic projects because teams work quickly, use lightweight tools,
+and often prepare documentation near the end of a semester. At the same time, AI
+tools can help draft tasks, tests, and reports, but AI-generated text is not reliable
+unless it is grounded in structured project data. A fluent weekly report is not
+enough if it cannot be traced back to requirements, evidence, and code activity.
+
+DevTrack AI is proposed as an evidence-based traceability and reporting system for
+student software teams. It is not designed as another task board. Instead, it
+organizes project work around the artifact flow:
+
+\begin{center}
+\texttt{Requirement -> Use Case -> Task -> Test Case -> Bug/Defect -> Evidence -> RTM -> Report}
+\end{center}
+
+The goal is to make project progress explainable, not only visible. A task should
+not be considered complete simply because its status is moved to \texttt{Done}; it
+should be linked to a requirement, checked by tests or review evidence, and visible
+in the Requirement Traceability Matrix (RTM). The RTM then becomes a live project
+health view rather than a static table written only for final submission.
+
+This paper contributes a lightweight system method for academic project tracking.
+First, DevTrack AI uses rule-based RTM status calculation so that requirement health
+is transparent. Second, it combines an Evidence Vault with a leader-controlled
+review gate to reduce unsupported task completion. Third, it uses GitHub integration
+and Code Insight to connect code evidence with project artifacts. Fourth, it uses AI
+only as a support layer for suggestions and report drafts, while official decisions
+remain under human review.

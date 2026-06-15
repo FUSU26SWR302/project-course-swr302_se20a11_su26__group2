@@ -2,6 +2,8 @@
 
 > Jira: [KAN Project Board](https://hieunguyen2816.atlassian.net/jira/software/projects/KAN/list?jql=project+%3D+KAN+ORDER+BY+created+DESC&atlOrigin=eyJpIjoiMzExMmYyNzg3M2IwNDFjMDk0NjBiNWZmZWI0NmMwN2YiLCJwIjoiaiJ9)
 
+> Paper: [DevTrack Paper Overleaf](https://www.overleaf.com/read/wctprjtqjfhb#e8f03a)
+
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/XTdeRLoD)
 
 ## Project Information
