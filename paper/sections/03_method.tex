@@ -7,13 +7,13 @@ common academic software project difficulties: unclear requirements, disconnecte
 tasks and tests, weak evidence, hard-to-review progress, and unclear individual
 contribution. DevTrack AI is designed as a system artifact that combines
 traceability management, evidence review, GitHub metadata integration, and
-AI-assisted reporting.
+AI-assisted task review.
 
 The method does not claim that AI replaces project management decisions. Instead,
 DevTrack AI separates deterministic project logic from AI support. Heuristic and rule-based
 logic is used for official status calculation, review gates, artifact relationships,
-and evidence scoring. AI is used only for suggestions, structured review summaries,
-and report drafts after project data has already been collected.
+and evidence scoring. AI is used only for semantic code patch analysis and requirement
+alignment reviews after developer evidence has been submitted.
 
 \subsection{System Artifact Model}
 
@@ -22,8 +22,9 @@ requirements. Requirements may have use cases and acceptance criteria. Tasks are
 linked to requirements and assigned to members. Test cases verify requirements and
 may create defects when execution fails. Evidence is uploaded or linked to tasks,
 requirements, tests, defects, or code activity. The RTM aggregates these
-relationships into a requirement-level health view, and reports are drafted from RTM
-snapshots and project activity.
+relationships into a requirement-level health view. For code-related work, git commit
+evidence is mapped to tasks, and an AI Task Review component matches patch changes
+against acceptance criteria to assess coverage and risk.
 
 \begin{table}
 \centering
@@ -39,7 +40,8 @@ Test Case & Verifies whether a requirement behaves as expected. \\
 Bug/Defect & Records failed behavior found during test execution. \\
 Evidence & Provides proof of implementation, testing, review, or demo result. \\
 RTM & Summarizes traceability and requirement health. \\
-Report & Presents weekly progress, risks, blockers, and contribution context. \\
+Report & Presents weekly progress, risks, blockers, and SLA penalty summaries (rule-based). \\
+AI Review & Provides code patch analysis and acceptance criteria alignment feedback. \\
 \bottomrule
 \end{tabular}
 \end{table}

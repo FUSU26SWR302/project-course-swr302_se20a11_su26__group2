@@ -1,0 +1,27 @@
+\section{Discussion}
+\label{sec:discussion}
+
+The experimental results validate that DevTrack AI effectively addresses the disconnect between requirements, code, and verification in student projects. This section discusses the broader educational implications, the role of AI in academic software engineering, and threats to the validity of our findings.
+
+\subsection{Educational Implications}
+
+In traditional software engineering courses, instructors and mentors struggle to monitor individual student contributions and verify whether project milestones are genuinely completed. Students often exhibit "verbal completion," declaring a task finished without providing verification. DevTrack AI forces a paradigm shift from self-reported progress to evidence-based verification:
+\begin{itemize}
+    \item \textbf{Encouraging Accountability:} By requiring conventional commit messages linked to tasks and tracking test screenshots in the Evidence Vault, students develop professional version control and QA habits.
+    \item \textbf{Instructor Oversight:} Rather than inspecting raw repositories or reading lengthy subjective reports, mentors can utilize the Requirement Traceability Matrix (RTM) to identify failing test cases, blocked tasks, and unverified requirements. This enables early, targeted pedagogical interventions before project deadlines.
+\end{itemize}
+
+\subsection{AI as an Advisory Agent}
+
+A key design choice in DevTrack AI is keeping the AI review pipeline in an advisory role. The AI generates code diff summaries, maps them to acceptance criteria, and flags potential security or complexity risks, but it does not have the authority to merge code, modify task states, or approve deliverables. The project leader or mentor remains the final authority.
+
+This human-in-the-loop approach is critical in educational contexts for several reasons. First, Large Language Models (LLMs) are prone to hallucinations and may misclassify code changes or overlook subtle bugs. Second, allowing AI to make final grading or completion decisions could lead to academic disputes and discourage students from engaging in critical peer reviews. By acting as a co-pilot, the AI reduces the cognitive load of code reviews for student leaders while maintaining human accountability.
+
+\subsection{Threats to Validity}
+
+Several factors may limit the generalizability and reliability of our findings:
+\begin{itemize}
+    \item \textbf{Internal Validity:} The accuracy of the AI alignment matrix is highly dependent on the quality of the input text. If students write vague or poorly defined Acceptance Criteria (e.g., "Make the system fast"), the LLM cannot establish a meaningful alignment mapping. Similarly, if commit messages are unstructured, the webhook parser fails to link the code to the corresponding task.
+    \item \textbf{External Validity:} Our evaluation was conducted on projects built using Java (Spring Boot) and Node.js. Although the git diff parsing is language-agnostic, certain structural extractions (such as method signatures and complexity delta estimations) are optimized for object-oriented languages. Further validation is required to test the system's effectiveness on projects utilizing functional programming languages or mobile application frameworks.
+    \item \textbf{Construct Validity:} The performance metrics reported in Section~\ref{sec:experiments} are specific to the \texttt{gemini-2.5-flash} model. Utilizing smaller, open-source models hosted locally might reduce API costs but could degrade the quality of risk detection and semantic alignment.
+\end{itemize}

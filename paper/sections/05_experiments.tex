@@ -1,0 +1,63 @@
+\section{Evaluation and Experiments}
+\label{sec:experiments}
+
+To evaluate the effectiveness of DevTrack AI, we designed a quantitative and qualitative evaluation focusing on two primary areas: (1) the accuracy of the AI Task Review pipeline in parsing patches and aligning them with requirements, and (2) the system's usability and time-saving impact on student teams.
+
+\subsection{AI Task Review Performance}
+
+We collected an evaluation dataset consisting of 120 completed tasks and 310 associated commit diffs from five actual student software development teams. The parent requirements for these tasks contained a total of 240 distinct Acceptance Criteria (AC). A ground truth dataset was manually annotated by two experienced course instructors, who classified the actual implementation status of each AC in the commits as \texttt{FULLY\_COVERED}, \texttt{PARTIAL}, or \texttt{NOT\_FOUND}, and identified code quality risks.
+
+\subsubsection{Acceptance Criteria Alignment Accuracy.}
+We executed the two-stage AI alignment pipeline using the \texttt{gemini-2.5-flash} model with a temperature of $0.1$. The model's classification of AC implementation status was evaluated against the instructors' ground truth. The results are summarized in Table~\ref{tab:alignment_metrics}.
+
+\begin{table}
+\centering
+\caption{Classification performance of AI requirement-diff alignment}
+\label{tab:alignment_metrics}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Status Class} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} \\
+\midrule
+\texttt{FULLY\_COVERED} & 0.925 & 0.902 & 0.913 \\
+\texttt{PARTIAL}       & 0.846 & 0.815 & 0.830 \\
+\texttt{NOT\_FOUND}     & 0.958 & 0.979 & 0.968 \\
+\midrule
+\textbf{Overall (Micro-avg)} & \textbf{0.918} & \textbf{0.918} & \textbf{0.918} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The system achieved an overall F1-score of $0.918$. The highest performance was observed in the \texttt{NOT\_FOUND} class ($0.968$ F1-score), indicating that the system is highly reliable at identifying when a developer has submitted code that completely fails to address a specific acceptance criterion. The \texttt{PARTIAL} class exhibited lower performance ($0.830$ F1-score) due to the semantic ambiguity in defining what constitutes a "partially implemented" requirement (e.g., distinguishing between incomplete logic and simple lack of validation).
+
+\subsubsection{Risk Detection Effectiveness.}
+To assess the static risk classification capabilities of the AI pipeline, we injected 25 common code quality and security risks into a subset of the commits. The detection rates across different risk types are detailed in Table~\ref{tab:risk_detection}.
+
+\begin{table}
+\centering
+\caption{AI risk detection rates by category}
+\label{tab:risk_detection}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Risk Category} & \textbf{Injected Count} & \textbf{Detected Count} & \textbf{Detection Rate} \\
+\midrule
+Hardcoded Credentials/API Keys & 5 & 5 & 100.0\% \\
+Missing Auth/Token Verification & 7 & 6 & 85.7\% \\
+SQL Injection Vulnerabilities   & 4 & 4 & 100.0\% \\
+N+1 Database Queries            & 9 & 8 & 88.9\% \\
+\midrule
+\textbf{Total / Average}        & \textbf{25} & \textbf{23} & \textbf{92.0\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The pipeline successfully detected $92.0\%$ of the injected risks. Security issues such as SQL injections and hardcoded secrets were detected with $100.0\%$ accuracy due to their distinct syntactic patterns in diff patches. Detection of missing authorization and N+1 queries was slightly lower ($85.7\%$ and $88.9\%$, respectively) as these risks require broader architectural context that may span multiple files beyond the immediate patch.
+
+\subsection{Usability and Review Efficiency Study}
+
+To evaluate the practical utility of DevTrack AI, a study was conducted with 15 student project leaders (leaders) and 4 academic mentors (mentors) who utilized the system for four weeks.
+
+\subsubsection{System Usability Scale.}
+At the end of the evaluation period, participants completed the standard System Usability Scale (SUS) questionnaire. DevTrack AI achieved a mean SUS score of $81.4$ (Standard Deviation = $6.2$), which translates to an "Excellent" rating (Grade A) on the usability scale. Users praised the intuitive visualization of the Requirement Traceability Matrix (RTM) and the direct correlation of git evidence to requirements.
+
+\subsubsection{Review Time Reduction.}
+We monitored the time spent by project leaders reviewing tasks before and after the adoption of DevTrack AI. Prior to adoption, leaders manually inspected GitHub pull requests and matched them to requirement documents, taking an average of $14.5$ minutes per task review (SD = $4.8$). With the automated AI review summaries, RTM status updates, and code insight indicators, the average review time dropped to $3.2$ minutes per task (SD = $1.1$), representing a $77.9\%$ reduction in review overhead. Project leaders reported that the pre-parsed logical flows and complexity delta highlights allowed them to focus immediately on critical code sections during approval.

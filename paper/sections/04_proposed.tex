@@ -107,40 +107,46 @@ When a developer pushes code to the repository:
     \item Commits that do not match the convention are stored as unlinked commits. The project leader can inspect them in the Code Insight dashboard and link them to tasks manually.
 \end{enumerate}
 
-\subsection{Factual Grounding and AI-Assisted Reporting}
+\subsection{AI-Assisted Task Review and Code Insight}
 
-DevTrack AI provides AI assistance for tasks such as drafting weekly progress reports. To guarantee reports remain accurate and represent actual project velocity, the system uses a factual grounding mechanism. 
+Manual inspection of software deliverables in educational environments is time-consuming and prone to oversight. While commit messages and pull requests link changes to tasks, they do not verify if the actual code modification satisfies the acceptance criteria of a requirement, nor do they evaluate code quality risks. DevTrack AI addresses this by providing a two-stage AI Task Review pipeline leveraging the Gemini API (\texttt{gemini-2.5-flash}) to analyze raw Git patches and align them with project requirements.
 
-The report generation pipeline works as follows:
+\subsubsection{Stage 1: Semantic Code Diff Analysis.} 
+When a developer requests a task review, the system extracts the raw Git diff $D$ of the commits linked to the task. The Code Patch Analyzer service dispatches $D$ along with a structured system prompt to the LLM. The model is constrained to output a structured JSON object representing the physical and semantic characteristics of the patch:
+\begin{itemize}
+    \item \textbf{Physical Changes ($\mathcal{C}_P$):} A collection of tuples $(f, a, t)$, where $f$ is the file path, $a \in \{\text{ADDED}, \text{MODIFIED}, \text{DELETED}\}$ is the action, and $t$ is the file type.
+    \item \textbf{Method Signatures ($\mathcal{S}_M$):} Structural changes at the declaration level, mapping affected classes, method names, full signatures, and change types.
+    \item \textbf{Communication Changes ($\mathcal{C}_C$):} Identifies exposed REST endpoints (e.g., \texttt{POST /api/v1/auth/login}), database columns added or modified, and external third-party APIs invoked.
+    \item \textbf{Logic Flows ($\mathcal{F}_L$):} Natural language descriptions of changed control flows and potential side-effects (e.g., exceptions thrown under specific conditions).
+    \item \textbf{Complexity Delta ($\Delta_C$):} An estimate of cyclomatic complexity increases at the method level, along with qualitative reasons.
+\end{itemize}
+
+\subsubsection{Stage 2: Requirement-Diff Alignment.}
+In the second stage, the parsed semantic structure of the code changes ($\mathcal{A}$) is aligned against the list of Acceptance Criteria $\mathcal{AC} = \{ac_1, ac_2, \dots, ac_N\}$ associated with the parent requirement. The Requirement-Diff Alignment service structures these inputs into a comparative prompt. The model maps each acceptance criterion to an alignment record containing:
 \begin{enumerate}
-    \item The system queries the database to extract structured project facts for the given week: sprint accomplishments, total tasks completed, active blocker warnings, RTM snapshots, latest test run statistics, and red-alert members (members with more than 3 overdue tasks or stale tasks).
-    \item These facts are structured into a JSON payload representing the ground truth.
-    \item The backend populates a prompt template, merging the structured facts with instructions. A sample prompt structure is shown in Fig.~\ref{fig:prompt}.
-    \item The prompt is dispatched to the AI provider (Gemini or OpenAI API). The AI model rewrites the structured metadata into a readable narrative draft.
-    \item The project leader reviews the AI-generated draft in the report editor, makes corrections, and saves it. 
+    \item \textbf{Status ($s_i \in \{\text{FULLY\_COVERED}, \text{PARTIAL}, \text{NOT\_FOUND}\}$):}
+    \begin{itemize}
+        \item \texttt{FULLY\_COVERED}: Clear source code evidence directly implements the criterion.
+        \item \texttt{PARTIAL}: The criterion is addressed but exhibits hardcoded values, missing validation, or incomplete logic.
+        \item \texttt{NOT\_FOUND}: No matching implementation is present in the code patch.
+    \end{itemize}
+    \item \textbf{Evidence Detail ($e_i$):} A string pinpointing the classes, methods, or files that implement the criterion.
+    \item \textbf{Feedback ($f_i$):} Actionable feedback for the developer regarding missing or incorrect aspects.
 \end{enumerate}
 
-This human-in-the-loop design prevents the model from generating hallucinated accomplishments, as any narrative description must match the underlying RTM and task database records.
+The system also computes an overall coverage ratio:
+\begin{equation}
+\text{Coverage Ratio} = \frac{\sum_{i=1}^N \mathbb{I}(s_i = \text{FULLY\_COVERED}) + 0.5 \times \mathbb{I}(s_i = \text{PARTIAL})}{N}
+\end{equation}
+where $\mathbb{I}$ is the indicator function.
 
-\begin{figure}
-\centering
-\begin{minipage}{0.9\textwidth}
-\begin{verbatim}
-[System Instructions]
-You are a project manager writing a weekly report based strictly on facts.
-Do not hallucinate. Do not add tasks that are not in the list.
+\subsubsection{Risk Level Classification.}
+Alongside alignment, the pipeline performs a static risk assessment on the patch, assigning a final risk level $R_{level} \in \{\text{LOW}, \text{MEDIUM}, \text{HIGH}, \text{CRITICAL}\}$ using the following criteria:
+\begin{itemize}
+    \item \textbf{CRITICAL:} Severe security flaws (e.g., SQL injection, hardcoded credentials, missing authorization filters) or completely broken critical flows.
+    \item \textbf{HIGH:} Significant technical risks, such as database performance degradation (N+1 queries), unhandled exceptions in critical business logic, or severe memory leaks.
+    \item \textbf{MEDIUM:} Moderate concerns, such as partial coverage of acceptance criteria or minor code smells.
+    \item \textbf{LOW:} Well-structured code fully aligning with the requirements without noticeable risks.
+\end{itemize}
 
-[Factual Project Context]
-Project: DevTrack AI | Sprint: Sprint 3
-Tasks Completed: 8/10 | Overdue Tasks: 2 (TASK-14, TASK-15)
-RTM Health: 85% requirements Done, 15% At Risk (failed test on REQ-2)
-Risks Identified: Minh Hieu is flagged RED due to 4 overdue tasks.
-
-[Output Format]
-Write a 3-paragraph summary covering: 
-1) Completed work, 2) Blockers & risks, 3) Proposed next steps.
-\end{verbatim}
-\end{minipage}
-\caption{Grounding prompt template structure for AI weekly reports}
-\label{fig:prompt}
-\end{figure}
+By keeping this AI assistant purely in an advisory role, the project leader remains the final approval authority. The structured review snapshots are saved in the database, enabling the team and mentors to audit project quality on a unified dashboard.
