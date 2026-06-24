@@ -1,0 +1,13 @@
+\section{Conclusion and Future Work}
+\label{sec:conclusion}
+
+This paper presented DevTrack AI, a system designed to improve project transparency, accountability, and code review efficiency in educational software engineering projects. By integrating git webhook parsers, automated Playwright execution, and deterministic RTM rules, the system establishes a concrete chain of evidence linking requirements to source code and test results. To assist student project leaders in managing code reviews, we introduced a two-stage AI Task Review pipeline that parses git diffs and semantically aligns them with acceptance criteria.
+
+Our evaluation indicates that the AI alignment matrix matches code changes to requirements with an F1-score of $0.918$, while static patch analysis successfully detects $92.0\%$ of common security and quality risks. Furthermore, a user study shows that project leaders experience a $77.9\%$ reduction in review time, and rate the system with a mean SUS score of $81.4$, demonstrating its high usability and educational value.
+
+In future work, we plan to extend DevTrack AI in the following directions:
+\begin{itemize}
+    \item \textbf{Automated Task Decomposition:} Utilizing LLMs to automatically generate tasks, checklists, and Playwright test templates directly from requirement descriptions.
+    \item \textbf{Cross-File Semantic Analysis:} Extending the AI review context beyond individual diff patches to analyze whole-project dependencies, enhancing the detection of N+1 database queries and authorization gaps.
+    \item \textbf{Collaboration Pattern Analytics:} Mining git evidence and task metrics to identify dysfunctional team behaviors, such as extreme code ownership or uneven distribution of development effort, allowing mentors to provide early support.
+\end{itemize}

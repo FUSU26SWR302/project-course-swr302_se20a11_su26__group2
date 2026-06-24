@@ -1,0 +1,73 @@
+\section{Related Work}
+
+\subsection{Agile Traceability and Requirement Traceability}
+
+Requirement traceability connects requirements with related artifacts across the
+software lifecycle. Prior work shows that natural language processing, information
+retrieval, and learning-based techniques can help recover or maintain trace links
+between textual artifacts \cite{nlpTraceability,crossLevelTraceability}. Other work
+uses bag-of-words, TF-IDF, word embeddings, BERT-based models, and retrieval-augmented
+generation to improve semantic matching and trace link recovery
+\cite{crossLevelTraceability,traceBert,ragTraceability}.
+
+These studies are useful for long-term automation, but they often focus on recovering
+links after artifacts already exist. DevTrack AI takes a more operational direction
+for student teams. It keeps traceability visible during project execution through a
+rule-based RTM and human-confirmed artifact links. AI-based trace suggestions can be
+added later, but official traceability evidence should remain explainable and
+reviewable in the academic context.
+
+\subsection{Requirement, Test, Defect, and Evidence Management}
+
+Traceability is useful only when connected artifacts are meaningful and current. A
+requirement should be related not only to implementation tasks, but also to acceptance
+criteria, test cases, defects, and proof of completion. Requirement-driven tracking
+therefore needs links between planning artifacts and verification artifacts so that
+project status can be explained from evidence \cite{nlpTraceability,crossLevelTraceability}.
+
+In student projects, this relationship is often weak. Teams may write test cases
+late, record defects informally, or upload screenshots without review. DevTrack AI
+addresses this gap through an Evidence Vault and a review-oriented task completion
+flow. Evidence can include screenshots, API links, test results, GitHub issues,
+commits, pull requests, and CI/check metadata. A task may request completion review,
+but the leader still approves or rejects it based on the available evidence. This
+keeps traceability useful for monitoring and collaboration, not only final
+documentation \cite{ragTraceability}.
+
+\subsection{Automated Reporting and Software Artifact Summarization}
+
+Automated reporting is related to research on release note generation, pull request
+description generation, and commit message generation. These studies commonly treat
+software development data as source material for summarization. For example,
+extractive summarization can select important commits or pull requests for release
+notes \cite{releaseNotes}. Pull request description generation studies show how
+commit messages and source-code context can be transformed into natural language
+descriptions \cite{prDescriptions}. Commit message generation research similarly explores
+how source-code changes can be summarized into readable descriptions
+\cite{commitMessages}.
+
+The lesson for DevTrack AI is that weekly reports should not be generated from an
+empty prompt. The system first collects structured facts from tasks, sprint status,
+RTM snapshots, defects, evidence review status, and GitHub activity. AI can then
+rewrite those facts into a readable draft. This keeps the report grounded in project
+data and allows the leader to review it before it is saved or submitted.
+
+\subsection{Mining Software Repositories and AI for Software Engineering}
+
+Mining Software Repositories (MSR) studies how data from version control systems,
+issue trackers, pull requests, and other development platforms can be used to
+understand software development activities \cite{teachingMsr}. This is relevant to
+DevTrack AI because code contribution is an important part of student project
+assessment, but commit count alone is not a fair indicator of contribution. DevTrack
+AI therefore combines linked commits, pull requests, CI/check results, task
+completion, accepted evidence, test activity, defect fixes, and review decisions.
+
+Large language models (LLMs) have also been studied for software engineering tasks
+such as code summarization, code understanding, issue analysis, and development
+support \cite{llmSurvey}. In project-based
+courses, LLM-based contribution summarization is also relevant because it can convert
+repository activity into a more understandable description of individual work
+\cite{llmContribution}. However, LLM output must be controlled because it can
+provide plausible but unverifiable explanations. In DevTrack AI, AI support is
+therefore used for explanation and drafting, not for automatic grading or task
+approval. This human-in-the-loop principle is important for academic transparency.

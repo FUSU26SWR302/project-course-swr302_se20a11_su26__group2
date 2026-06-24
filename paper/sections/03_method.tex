@@ -1,0 +1,58 @@
+\section{Method}
+
+\subsection{Research and Design Approach}
+
+This work follows a design-oriented approach. The target problem is identified from
+common academic software project difficulties: unclear requirements, disconnected
+tasks and tests, weak evidence, hard-to-review progress, and unclear individual
+contribution. DevTrack AI is designed as a system artifact that combines
+traceability management, evidence review, GitHub metadata integration, and
+AI-assisted task review.
+
+The method does not claim that AI replaces project management decisions. Instead,
+DevTrack AI separates deterministic project logic from AI support. Heuristic and rule-based
+logic is used for official status calculation, review gates, artifact relationships,
+and evidence scoring. AI is used only for semantic code patch analysis and requirement
+alignment reviews after developer evidence has been submitted.
+
+\subsection{System Artifact Model}
+
+The core model follows the artifact chain introduced in Section~\ref{sec:intro}. A project contains
+requirements. Requirements may have use cases and acceptance criteria. Tasks are
+linked to requirements and assigned to members. Test cases verify requirements and
+may create defects when execution fails. Evidence is uploaded or linked to tasks,
+requirements, tests, defects, or code activity. The RTM aggregates these
+relationships into a requirement-level health view. For code-related work, git commit
+evidence is mapped to tasks, and an AI Task Review component matches patch changes
+against acceptance criteria to assess coverage and risk.
+
+\begin{table}
+\centering
+\caption{Main DevTrack AI artifacts and their roles}
+\begin{tabular}{ll}
+\toprule
+\textbf{Artifact} & \textbf{Role in the system} \\
+\midrule
+Requirement & Defines expected system behavior and acceptance criteria. \\
+Use Case & Describes actor interaction and requirement scenarios. \\
+Task & Represents implementation, testing, design, documentation, or review work. \\
+Test Case & Verifies whether a requirement behaves as expected. \\
+Bug/Defect & Records failed behavior found during test execution. \\
+Evidence & Provides proof of implementation, testing, review, or demo result. \\
+RTM & Summarizes traceability and requirement health. \\
+Report & Presents weekly progress, risks, blockers, and SLA penalty summaries (rule-based). \\
+AI Review & Provides code patch analysis and acceptance criteria alignment feedback. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Evaluation Direction}
+
+The planned evaluation focuses on traceability completeness and review usefulness.
+Student project scenarios can be used to check whether DevTrack AI identifies
+requirements without tasks, tasks without evidence, requirements without test cases,
+failed tests without defects, unlinked code evidence, and weak completion claims. For
+AI-assisted reporting, generated drafts should be compared against structured project
+facts to detect unsupported claims. Feedback from leaders, members, and mentors can
+also be collected to assess whether the RTM and evidence workflow make project
+review clearer.

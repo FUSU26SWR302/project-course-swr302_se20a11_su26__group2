@@ -1,0 +1,152 @@
+\section{Proposed System}
+
+\subsection{Rule-Based RTM Status Calculation}
+
+The RTM module is read-only over existing project data. It does not create or modify
+requirements, tasks, tests, bugs, or evidence. Instead, it aggregates linked
+artifacts and computes requirement health from task progress, test execution,
+bug/defect state, accepted evidence, and risk reasons.
+
+To formalize this logic, let $R$ be a requirement. We define:
+\begin{itemize}
+    \item $T(R)$: The set of tasks linked to $R$. Let $\text{status}(t) \in \{\text{TODO}, \text{IN\_PROGRESS}, \text{IN\_REVIEW}, \text{DONE}, \text{BLOCKED}\}$ be the status of task $t \in T(R)$.
+    \item $TC(R)$: The set of test cases linked to $R$. Let $\text{status}(c) \in \{\text{PASS}, \text{FAIL}, \text{BLOCKED}, \text{NOT\_RUN}\}$ be the latest execution status of test case $c \in TC(R)$.
+    \item $B(R)$: The set of bugs linked to $R$ (via related tasks or failed test executions). Let $\text{status}(b) \in \{\text{NEW}, \text{ASSIGNED}, \text{FIXED}, \text{VERIFIED}, \text{CLOSED}\}$ be the status of bug $b \in B(R)$.
+    \item $E(R)$: The set of accepted evidences linked to $R$.
+    \item $\text{req\_status}(R) \in \{\text{DRAFT}, \text{ACTIVE}, \text{DONE}\}$: The user-defined lifecycle state of $R$.
+    \item $\text{evidence\_req}(R) \in \{\text{true}, \text{false}\}$: An indicator of whether evidence is mandatory for $R$.
+\end{itemize}
+
+The calculated traceability status of $R$, denoted as $\text{trace\_status}(R) \in \{\text{AT\_RISK}, \text{DONE}, \text{NOT\_STARTED}, \text{IN\_PROGRESS}\}$, is evaluated deterministically using the following hierarchical rules:
+
+\begin{enumerate}
+    \item \textbf{At Risk State ($\text{trace\_status}(R) = \text{AT\_RISK}$):} A requirement is flagged as at risk if there are blocked tasks, failed/blocked tests, open bugs, or missing required evidence. Formally:
+    \begin{align*}
+    \text{trace\_status}(R) = \text{AT\_RISK} \quad \text{if} \quad 
+    & \exists t \in T(R): \text{status}(t) = \text{BLOCKED} \\
+    & \lor \exists c \in TC(R): \text{status}(c) \in \{\text{FAIL}, \text{BLOCKED}\} \\
+    & \lor \exists b \in B(R): \text{status}(b) \notin \{\text{FIXED}, \text{VERIFIED}, \text{CLOSED}\} \\
+    & \lor (\text{evidence\_req}(R) \land |E(R)| = 0) \\
+    & \lor (T(R) = \emptyset \land \text{req\_status}(R) = \text{ACTIVE})
+    \end{align*}
+    
+    \item \textbf{Done State ($\text{trace\_status}(R) = \text{DONE}$):} A requirement is resolved if it has no blocking risks, its lifecycle status is done, and all linked tasks and tests are successfully completed:
+    \begin{align*}
+    \text{trace\_status}(R) = \text{DONE} \quad \text{if} \quad 
+    & \text{trace\_status}(R) \neq \text{AT\_RISK} \\
+    & \land \text{req\_status}(R) = \text{DONE} \\
+    & \land (T(R) \neq \emptyset \land \forall t \in T(R): \text{status}(t) = \text{DONE}) \\
+    & \land (TC(R) \neq \emptyset \land \forall c \in TC(R): \text{status}(c) = \text{PASS})
+    \end{align*}
+
+    \item \textbf{Not Started State ($\text{trace\_status}(R) = \text{NOT\_STARTED}$):} A requirement is untouched if no progress has been made and it has no risks:
+    \begin{align*}
+    \text{trace\_status}(R) = \text{NOT\_STARTED} \quad \text{if} \quad
+    & \text{trace\_status}(R) \neq \text{AT\_RISK} \\
+    & \land \forall t \in T(R): \text{status}(t) = \text{TODO} \\
+    & \land \forall c \in TC(R): \text{status}(c) = \text{NOT\_RUN} \\
+    & \land \text{req\_status}(R) \neq \text{DONE}
+    \end{align*}
+
+    \item \textbf{In Progress State ($\text{trace\_status}(R) = \text{IN\_PROGRESS}$):} Otherwise, if there is active development but all criteria for completion have not been met:
+    \begin{align*}
+    \text{trace\_status}(R) = \text{IN\_PROGRESS} \quad \text{otherwise}
+    \end{align*}
+\end{enumerate}
+
+\subsection{Evidence-Based Task Review}
+
+DevTrack AI uses a review gate before a task is finally accepted as done. A member
+requests review after completing work. The system builds an evidence summary from
+available project data, including requirement linkage, assignee information,
+checklist status, subtasks, blocked state, linked GitHub issue, uploaded evidence,
+and linked code evidence. The project leader then approves or rejects the task. This
+process reduces false completion, where a task is marked done without meaningful
+proof.
+
+The Code Insight module extends this review gate for code-related tasks. It uses the
+shared GitHub Integration Core to handle repository configuration, webhook
+verification, and event dispatching. Push, pull request, workflow, and check-run
+events can be stored as normalized GitHub evidence and linked to tasks through
+explicit task identifiers, GitHub issue references, or SHA chains. Code Insight then
+uses local task signals and linked GitHub evidence to produce an explainable score,
+show evidence details to the leader, fetch changed-file metadata when needed, store
+local structured AI review summaries, capture review snapshots, and expose dashboard
+metrics. The leader remains the final authority:
+
+\begin{center}
+\texttt{GitHub evidence + deterministic rules + optional AI review + leader decision = trusted task completion}
+\end{center}
+
+\subsection{Automated Test Integration via Playwright Service}
+
+Verification of requirements is further automated through online test execution. Rather than relying on manual QA declarations, DevTrack AI integrates an execution service built on Node.js and Playwright. 
+
+When a test run is triggered from the web workspace:
+\begin{enumerate}
+    \item The Spring Boot backend serializes the test case steps and base URL into a JSON payload and issues an HTTP POST request to the Playwright execution service.
+    \item The Playwright service dynamically spins up a headless browser instance, executes the steps sequentially, and records step duration, status, and failures.
+    \item Screenshots are captured automatically at the end of execution (or upon failure) and returned as Base64-encoded strings.
+    \item The backend parses the response, updates the test execution record, uploads the screenshots to Cloudinary to be cataloged in the Evidence Vault, and recalculates the RTM status.
+    \item If the test status is \texttt{FAIL}, the system automatically generates an unassigned Bug Report containing the failed step and step-by-step logs, preventing defects from being overlooked.
+\end{enumerate}
+
+\subsection{GitHub Integration and Code Insight Webhook}
+
+To link source-code edits directly to requirements, DevTrack AI utilizes GitHub webhooks. The backend exposes a webhook listener verified via SHA-256 HMAC signatures to guarantee event integrity. 
+
+When a developer pushes code to the repository:
+\begin{enumerate}
+    \item The GitHub webhook propagates commit and pull request metadata to the DevTrack AI backend.
+    \item A commit parser scans commit messages using a regular expression to capture conventional commits linked to tasks:
+    \begin{equation}
+    \text{Regex Pattern: } \backslash\text{b(feat|fix|docs|refactor|test)}\backslash(\text{TASK-}\backslash\text{d}+)\backslash):\backslash\text{s}+(.+)
+    \end{equation}
+    For instance, a commit message \texttt{feat(TASK-12): implement login API} is resolved as task key \texttt{TASK-12}.
+    \item The commit metadata (SHA, author name, timestamp, and message) is registered as a git evidence record linked to the task.
+    \item Commits that do not match the convention are stored as unlinked commits. The project leader can inspect them in the Code Insight dashboard and link them to tasks manually.
+\end{enumerate}
+
+\subsection{AI-Assisted Task Review and Code Insight}
+
+Manual inspection of software deliverables in educational environments is time-consuming and prone to oversight. While commit messages and pull requests link changes to tasks, they do not verify if the actual code modification satisfies the acceptance criteria of a requirement, nor do they evaluate code quality risks. DevTrack AI addresses this by providing a two-stage AI Task Review pipeline leveraging the Gemini API (\texttt{gemini-2.5-flash}) to analyze raw Git patches and align them with project requirements.
+
+\subsubsection{Stage 1: Semantic Code Diff Analysis.} 
+When a developer requests a task review, the system extracts the raw Git diff $D$ of the commits linked to the task. The Code Patch Analyzer service dispatches $D$ along with a structured system prompt to the LLM. The model is constrained to output a structured JSON object representing the physical and semantic characteristics of the patch:
+\begin{itemize}
+    \item \textbf{Physical Changes ($\mathcal{C}_P$):} A collection of tuples $(f, a, t)$, where $f$ is the file path, $a \in \{\text{ADDED}, \text{MODIFIED}, \text{DELETED}\}$ is the action, and $t$ is the file type.
+    \item \textbf{Method Signatures ($\mathcal{S}_M$):} Structural changes at the declaration level, mapping affected classes, method names, full signatures, and change types.
+    \item \textbf{Communication Changes ($\mathcal{C}_C$):} Identifies exposed REST endpoints (e.g., \texttt{POST /api/v1/auth/login}), database columns added or modified, and external third-party APIs invoked.
+    \item \textbf{Logic Flows ($\mathcal{F}_L$):} Natural language descriptions of changed control flows and potential side-effects (e.g., exceptions thrown under specific conditions).
+    \item \textbf{Complexity Delta ($\Delta_C$):} An estimate of cyclomatic complexity increases at the method level, along with qualitative reasons.
+\end{itemize}
+
+\subsubsection{Stage 2: Requirement-Diff Alignment.}
+In the second stage, the parsed semantic structure of the code changes ($\mathcal{A}$) is aligned against the list of Acceptance Criteria $\mathcal{AC} = \{ac_1, ac_2, \dots, ac_N\}$ associated with the parent requirement. The Requirement-Diff Alignment service structures these inputs into a comparative prompt. The model maps each acceptance criterion to an alignment record containing:
+\begin{enumerate}
+    \item \textbf{Status ($s_i \in \{\text{FULLY\_COVERED}, \text{PARTIAL}, \text{NOT\_FOUND}\}$):}
+    \begin{itemize}
+        \item \texttt{FULLY\_COVERED}: Clear source code evidence directly implements the criterion.
+        \item \texttt{PARTIAL}: The criterion is addressed but exhibits hardcoded values, missing validation, or incomplete logic.
+        \item \texttt{NOT\_FOUND}: No matching implementation is present in the code patch.
+    \end{itemize}
+    \item \textbf{Evidence Detail ($e_i$):} A string pinpointing the classes, methods, or files that implement the criterion.
+    \item \textbf{Feedback ($f_i$):} Actionable feedback for the developer regarding missing or incorrect aspects.
+\end{enumerate}
+
+The system also computes an overall coverage ratio:
+\begin{equation}
+\text{Coverage Ratio} = \frac{\sum_{i=1}^N \mathbb{I}(s_i = \text{FULLY\_COVERED}) + 0.5 \times \mathbb{I}(s_i = \text{PARTIAL})}{N}
+\end{equation}
+where $\mathbb{I}$ is the indicator function.
+
+\subsubsection{Risk Level Classification.}
+Alongside alignment, the pipeline performs a static risk assessment on the patch, assigning a final risk level $R_{level} \in \{\text{LOW}, \text{MEDIUM}, \text{HIGH}, \text{CRITICAL}\}$ using the following criteria:
+\begin{itemize}
+    \item \textbf{CRITICAL:} Severe security flaws (e.g., SQL injection, hardcoded credentials, missing authorization filters) or completely broken critical flows.
+    \item \textbf{HIGH:} Significant technical risks, such as database performance degradation (N+1 queries), unhandled exceptions in critical business logic, or severe memory leaks.
+    \item \textbf{MEDIUM:} Moderate concerns, such as partial coverage of acceptance criteria or minor code smells.
+    \item \textbf{LOW:} Well-structured code fully aligning with the requirements without noticeable risks.
+\end{itemize}
+
+By keeping this AI assistant purely in an advisory role, the project leader remains the final approval authority. The structured review snapshots are saved in the database, enabling the team and mentors to audit project quality on a unified dashboard.
